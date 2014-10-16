@@ -114,4 +114,5 @@
 (defroutes app-routes
   (static "/" {:root "html"}))
 
-(def app (handler/site app-routes))
+(def app
+  (-> (handler/site app-routes)))

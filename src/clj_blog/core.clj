@@ -6,6 +6,7 @@
         clj-blog.config)
   (:require [clojure.string :as str]
             [compojure.handler :as handler]
+            [clojure-watch.core :refer [start-watch]]
             [ring.util.response :as res]
             [clojure.java.io :as io]))
 
@@ -23,7 +24,8 @@
   (eval (read-template f)))
 
 (defn html-doc [body]
-  (binding [*body* body]
+  (binding [*ns* (the-ns 'clj-blog.core)
+            *body* body]
     (html
      (doctype :html5)
      (load-template (or (:template *body*)
@@ -92,13 +94,22 @@
 
 (defn build-blog []
   (let [fs (->> (file-seq (io/file (str (:in-dir config) "/posts")))
+                (filter #(not (.isHidden %)))
                 (map #(.getPath %))
                 (filter #(.endsWith % ".md"))
                 (map #(str/replace % (str (:in-dir config) "/posts/") "")))]
-    (map dump-blog fs)))
+    (doall (map dump-blog fs))))
 
 (defn -main []
-  (build-blog))
+  (build-blog)
+  (future
+    (start-watch [{:path (:in-dir config)
+                   :event-types [:create :modify :delete]
+                   :bootstrap (fn [path] (println "Starting to watch" path))
+                   :callback (fn [event filename]
+                               (println event filename)
+                               (build-blog))
+                   :options {:recursive true}}])))
 
 
 (defn- add-wildcard

@@ -92,14 +92,18 @@
     (build-tags tags (:metadata body))
     (str-dump out-path (blog body (:template (:metadata body))))))
 
+(defn gen-classes-page [classes template]
+  (eval `(let [~'classes ~classes] (html ~(read-template template))))
 
-(defn build-blog []
-  (let [fs (->> (file-seq (io/file (str (:in-dir config) "/posts")))
-                (filter #(not (.isHidden %)))
-                (map #(.getPath %))
-                (filter #(.endsWith % ".md"))
-                (map #(str/replace % (str (:in-dir config) "/posts/") "")))]
-    (doall (map dump-blog fs))))
+  (defn build-blog []
+    (let [fs (->> (file-seq (io/file (str (:in-dir config) "/posts")))
+                  (filter #(not (.isHidden %)))
+                  (map #(.getPath %))
+                  (filter #(.endsWith % ".md"))
+                  (map #(str/replace % (str (:in-dir config) "/posts/") "")))]
+      (doall (map dump-blog fs))
+      (gen-tags-page)
+      (gen-archives-page))))
 
 (defn -main []
   (build-blog)

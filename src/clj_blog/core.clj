@@ -83,6 +83,7 @@
         body (compile-markdown (str (:in-dir config) "/posts/" post))
         body (assoc body :metadata (merge {:date-str date-str
                                            :title title
+                                           :type :post
                                            :post-uri post-uri}
                                           (:metadata body)))
         tags (when-let [tags (-> body :metadata :tags)]
